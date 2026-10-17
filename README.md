@@ -70,3 +70,26 @@ Response: `text/event-stream`. Each event is one `data: <json>` line followed by
 3. `{"type":"done"}`
 
 On failure at any point: `{"type":"error","message":"..."}`, after which the stream ends.
+
+## Deploy (GitHub Pages + Render)
+
+GitHub Pages only serves static files, so the app is split in two:
+
+| Part | Where | Why |
+|---|---|---|
+| `frontend/` (landing page + chat widget) | GitHub Pages, `https://mounir-ben-ammar.github.io/Chatboot/` | static HTML/CSS/JS |
+| `backend/` (PDF search + OpenAI) | Render (free web service) | runs Python and keeps `OPENAI_API_KEY` secret |
+
+**1. Backend on Render**
+1. Sign in at https://render.com with GitHub, then **New → Blueprint** and pick this repository. Render reads `render.yaml`.
+2. When asked, paste your OpenAI key into `OPENAI_API_KEY` (it stays in Render, never in git).
+3. After the deploy, open `https://<your-service>.onrender.com/api/health`. It should return `"status":"ok"`.
+4. If your service URL is not `https://chatboot-api.onrender.com`, update it in `frontend/config.js` and push.
+
+`ALLOWED_ORIGINS` (set in `render.yaml`) lists the sites allowed to call the API; add more origins comma-separated if needed. The free plan sleeps after ~15 min idle, so the first request can take ~1 minute.
+
+**2. Frontend on GitHub Pages**
+1. In the repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. Every push to `main` that touches `frontend/` runs `.github/workflows/pages.yml` and publishes the site (or run it manually from the **Actions** tab).
+
+Locally nothing changes: `frontend/config.js` uses the same origin unless the page is served from `github.io`.

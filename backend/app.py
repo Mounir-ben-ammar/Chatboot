@@ -18,6 +18,7 @@ from typing import Literal
 import openai
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -67,6 +68,15 @@ index = GolfRulesIndex(PDF_PATH)
 log.info("Indexed %s: %d pages, %d chunks", PDF_NAME, index.pages, len(index.chunks))
 
 app = FastAPI(title="Rules of Golf RAG Chatbot")
+# Lets the static frontend on GitHub Pages call this API from another origin.
+# ALLOWED_ORIGINS is a comma-separated list; empty means same-origin only (local run).
+if allowed_origins := [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
+    )
 # check_dir=False so the server starts even before the frontend exists.
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR, check_dir=False), name="static")
 

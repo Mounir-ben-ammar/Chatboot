@@ -7,6 +7,8 @@
   const MAX_CHARS = 2000;
   const HISTORY_TURNS = 6;
   const HEALTH_INTERVAL_MS = 30000;
+  // Backend origin; empty means same origin (local run). Set in config.js.
+  const API_BASE = (window.CHATBOT_CONFIG?.apiBase ?? "").replace(/\/+$/, "");
 
   const $ = (sel) => document.querySelector(sel);
   const els = {
@@ -66,7 +68,7 @@
 
   async function checkHealth() {
     try {
-      const res = await fetch("/api/health", { cache: "no-store" });
+      const res = await fetch(`${API_BASE}/api/health`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (!data.llm_configured) {
@@ -315,7 +317,7 @@
     };
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
         body: JSON.stringify({ message: question, history }),
